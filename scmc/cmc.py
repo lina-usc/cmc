@@ -3,28 +3,30 @@ import pandas as pd
 from tqdm.notebook import tqdm
 import numpy as np
 from functools import partial
+from frozendict import frozendict
 
 ##### PARAMETER VALUES #######
 
 # https://brian2.readthedocs.io/en/stable/examples/frompapers.Stimberg_et_al_2018.example_1_COBA.html
 ### Neuron parameters
-E_e = 0*br.mV             # Excitatory synaptic reversal potential
-E_i = -80*br.mV           # Inhibitory synaptic reversal potential
-V_th = -50*br.mV          # Firing threshold (just used for v initialization)
-E_l = -60*br.mV           # Leak reversal potential (just used for v initialization)
+parameters = frozendict(
+    E_e = 0*br.mV,             # Excitatory synaptic reversal potential
+    E_i = -80*br.mV,           # Inhibitory synaptic reversal potential
+    V_th = -50*br.mV,          # Firing threshold (just used for v initialization)
+    E_l = -60*br.mV,           # Leak reversal potential (just used for v initialization)
 
-C_m = 198*br.pF           # Membrane capacitance
+    C_m = 198*br.pF,           # Membrane capacitance
 
-tau_e = 5*br.ms           # Excitatory synaptic time constant
-tau_i = 10*br.ms          # Inhibitory synaptic time constant
-tau_r = 5*br.ms           # Refractory period
+    tau_e = 5*br.ms,           # Excitatory synaptic time constant
+    tau_i = 10*br.ms,          # Inhibitory synaptic time constant
+    tau_r = 5*br.ms,           # Refractory period
 
-### Synapse parameters
-w_e = 25*br.nS          # Excitatory synaptic conductance
-w_i = 10*br.nS           # Inhibitory synaptic conductance
-#Omega_d = 2.0/second   # Synaptic depression rate
-#Omega_f = 3.33/second  # Synaptic facilitation rate
-
+    ### Synapse parameters
+    w_e = 25*br.nS,          # Excitatory synaptic conductance
+    w_i = 10*br.nS,           # Inhibitory synaptic conductance
+    #Omega_d = 2.0/second   # Synaptic depression rate
+    #Omega_f = 3.33/second  # Synaptic facilitation rate
+)
 
 
 # https://groups.google.com/g/briansupport/c/39rcKe5xdsE
@@ -56,18 +58,19 @@ def get_izhikevich_pop(a, b, c, d, I=None, nb_neurons=1):
     '''
 
     #Set up neuron population
-    G = br.NeuronGroup(nb_neurons, model, threshold='v >= 30*mV', 
-                       reset=reset, #refractory="tau_r", 
-                       method='euler')
+    G = br.NeuronGroup(nb_neurons, model, threshold='v >= 30*mV',
+                       reset=reset, #refractory="tau_r",
+                       method='euler',
+                       namespace=dict(parameters))
 
     # Creating some level of randomness in the exact parameter values, to
     # avoid all neurons ending up having the same activity after the 
     # initialization transients are gone (95% CI approximately within 
     # +/- 1% of relative error)
-    G.a = a*(1 + np.random.randn()/1.96/0.01)
-    G.b = b*(1 + np.random.randn()/1.96/0.01)
-    G.c = c*(1 + np.random.randn()/1.96/0.01)
-    G.d = d*(1 + np.random.randn()/1.96/0.01)
+    G.a = a*(1 + np.random.randn()/1.96*0.01)
+    G.b = b*(1 + np.random.randn()/1.96*0.01)
+    G.c = c*(1 + np.random.randn()/1.96*0.01)
+    G.d = d*(1 + np.random.randn()/1.96*0.01)
     G.v = c
     G.u = b * c
     G.I = I
